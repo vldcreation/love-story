@@ -14,13 +14,15 @@
             justify-content: center;
             background: #ffe6f2;
             font-family: 'Arial', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
             overflow: hidden;
         }
 
         .envelope {
             position: relative;
-            width: 300px;
-            height: 200px;
+            width: 200px;
+            height: 140px;
             background: #ff4444;
             cursor: pointer;
             transition: all 0.5s ease;
@@ -75,7 +77,8 @@
 
         .slide img {
             width: 100%;
-            height: 500px;
+            height: 60vh;
+            max-height: 500px;
             object-fit: cover;
         }
 
@@ -121,6 +124,46 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .envelope {
+                width: 150px;
+                height: 100px;
+            }
+
+            .slide img {
+                height: 50vh;
+            }
+
+            .nav-button {
+                padding: 10px;
+                font-size: 18px;
+            }
+
+            .caption {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .envelope {
+                width: 130px;
+                height: 90px;
+            }
+
+            .slide img {
+                height: 45vh;
+            }
+
+            .caption {
+                font-size: 16px;
+            }
+        }
+
+        /* Add touch-action for Safari */
+        .slider-container {
+            touch-action: pan-y;
         }
     </style>
 </head>
@@ -221,8 +264,49 @@
             await updateCaption(currentSlide);
         }
 
+        // Previous JavaScript with mobile enhancements
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // Add touch event listeners
+        const sliderContainer = document.querySelector('.slider-container');
+
+        sliderContainer.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+
+        sliderContainer.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
+
+        function handleSwipe() {
+            const minSwipeDistance = 50;
+            const swipeDistance = touchStartX - touchEndX;
+
+            if (swipeDistance > minSwipeDistance) {
+                changeSlide(1); // Swipe left
+            } else if (swipeDistance < -minSwipeDistance) {
+                changeSlide(-1); // Swipe right
+            }
+        }
+
+        // Add iOS audio play permission
+        document.addEventListener('touchstart', function initAudio() {
+            if (music.paused) {
+                music.play().then(() => music.pause());
+            }
+            document.removeEventListener('touchstart', initAudio);
+        });
+
         envelope.addEventListener('click', async () => {
-            music.play();
+            try {
+                await music.play();
+            } catch (error) {
+                // Handle iOS audio play restriction
+                alert('Tap anywhere to enable audio');
+                console.error('Audio error:', error);
+            }
             envelope.classList.add('flap-open');
 
             setTimeout(async () => {
