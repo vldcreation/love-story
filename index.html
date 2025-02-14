@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Love Story</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #ffe6f2;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: #ff4444;
+            cursor: pointer;
+            transition: all 0.5s ease;
+        }
+
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            clip-path: polygon(0 0, 100% 0, 50% 50%);
+            background: #ff6666;
+        }
+
+        .flap-open::before {
+            transform: rotateX(180deg);
+            transition: transform 0.5s ease;
+        }
+
+        .content {
+            display: none;
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+            position: relative;
+        }
+
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        }
+
+        .slider {
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide {
+            min-width: 100%;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+        }
+
+        .caption {
+            font-size: 24px;
+            color: #ff4444;
+            margin-top: 20px;
+            font-family: 'Brush Script MT', cursive;
+            min-height: 40px;
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.8);
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 24px;
+            color: #ff4444;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .prev { left: 20px; }
+        .next { right: 20px; }
+
+        .caption-loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 68, 68, 0.3);
+            border-radius: 50%;
+            border-top-color: #ff4444;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="envelope"></div>
+    <div class="content">
+        <div class="slider-container">
+            <div class="slider"></div>
+            <button class="nav-button prev">❮</button>
+            <button class="nav-button next">❯</button>
+        </div>
+        <div class="caption"></div>
+    </div>
+
+    <!-- Add your music file in the project folder (name: romantic-music.mp3) -->
+    <audio id="background-music" loop>
+        <source src="love-story.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // ========================
+        // CONFIGURATION SECTION
+        // ========================
+
+        // Add your image file paths here (place images in 'images' folder)
+        const IMAGE_PATHS = [
+            'images/img1.JPG',  // ← Change these to your actual filenames
+            'images/img2.JPG',
+            'images/img3.JPG',
+            'images/img4.JPG'
+        ];
+
+        // Default captions (used if API fails)
+        const DEFAULT_CAPTIONS = [
+            "Your love lights up my world",
+            "Every moment with you is precious",
+            "Together is my favorite place to be",
+            "You're my forever and always"
+        ];
+
+        // ========================
+        // SYSTEM CODE
+        // ========================
+
+        const envelope = document.querySelector('.envelope');
+        const content = document.querySelector('.content');
+        const slider = document.querySelector('.slider');
+        const captionElement = document.querySelector('.caption');
+        const music = document.getElementById('background-music');
+        let currentSlide = 0;
+
+        function createSlider() {
+            IMAGE_PATHS.forEach((path, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'slide';
+                slide.innerHTML = `<img src="${path}" alt="Memory ${index + 1}">`;
+                slider.appendChild(slide);
+            });
+            document.querySelectorAll('.slide')[0].classList.add('active');
+            slider.style.transform = 'translateX(0)'; // Initialize position
+        }
+
+        async function fetchCaption(imageIndex) {
+            try {
+                captionElement.innerHTML = `<div class="caption-loader"></div>`;
+                const response = await fetch(`https://api.quotable.io/random?tags=love`);
+                if (!response.ok) throw new Error('API error');
+                const data = await response.json();
+                return data.content;
+            } catch (error) {
+                return DEFAULT_CAPTIONS[imageIndex] || "My heart belongs to you";
+            }
+        }
+
+        async function updateCaption(imageIndex) {
+            const caption = await fetchCaption(imageIndex);
+            captionElement.textContent = caption;
+        }
+
+        async function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+
+            // Remove active class from current slide
+            slides[currentSlide].classList.remove('active');
+
+            // Calculate new slide index
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+
+            // Update slider position
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            // Add active class to new slide after transition
+            setTimeout(() => {
+                slides[currentSlide].classList.add('active');
+            }, 50);
+
+            await updateCaption(currentSlide);
+        }
+
+        envelope.addEventListener('click', async () => {
+            music.play();
+            envelope.classList.add('flap-open');
+
+            setTimeout(async () => {
+                envelope.style.display = 'none';
+                content.style.display = 'block';
+                createSlider();
+                await updateCaption(0);
+                startSliderAutoAdvance();
+            }, 800);
+        });
+
+        document.querySelector('.next').addEventListener('click', () => changeSlide(1));
+        document.querySelector('.prev').addEventListener('click', () => changeSlide(-1));
+
+        function startSliderAutoAdvance() {
+            setInterval(() => changeSlide(1), 2500);
+        }
+    </script>
+</body>
+</html>
