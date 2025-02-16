@@ -1,4 +1,10 @@
+# Local Development
 local
 debug
 
+# depdencies
+node_modules
+
+# Secret Files
 .env
+drive_secret.json
