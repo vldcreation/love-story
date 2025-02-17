@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Images - Love Story</title>
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed #ff4444;
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.dragover {
+            background-color: rgba(255, 68, 68, 0.1);
+            border-color: #ff2222;
+        }
+
+        .title-input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .upload-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background-color: #ff2222;
+        }
+
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+        }
+
+        #message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h2>Upload New Image</h2>
+        <form id="uploadForm">
+            <input type="text" class="title-input" id="imageTitle" placeholder="Enter image title" required>
+            <div class="drop-zone" id="dropZone">
+                Drag and drop image here or click to select
+                <input type="file" id="fileInput" accept="image/*" style="display: none">
+                <div id="preview"></div>
+            </div>
+            <button type="submit" class="upload-btn">Upload Image</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const message = document.getElementById('message');
+        const form = document.getElementById('uploadForm');
+        let selectedFile = null;
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            preview.innerHTML = `
+                <img src="${URL.createObjectURL(file)}" class="preview-image">
+                <p>${file.name}</p>
+            `;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedFile) {
+                showMessage('Please select an image', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('title', document.getElementById('imageTitle').value);
+
+            try {
+                const credentials = btoa(prompt('Please enter username:password'));
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('Image uploaded successfully!', 'success');
+                    form.reset();
+                    preview.innerHTML = '';
+                    selectedFile = null;
+                    // redirect to admin.html
+                    window.location.href = 'admin.html'
+                } else {
+                    const error = await response.json();
+                    showMessage(error.message || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Upload failed: ' + error.message, 'error');
+            }
+        });
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = type;
+            setTimeout(() => {
+                message.textContent = '';
+                message.className = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
