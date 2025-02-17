@@ -8,7 +8,7 @@ const basicAuth = require('express-basic-auth');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.APP_PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 // Configure multer for image upload
 const storage = multer.diskStorage({
@@ -141,4 +141,7 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+}).on('error', (err) => {
+    console.error('Server error:', err);
+    process.exit(1);
 });
