@@ -34,6 +34,9 @@ jobs:
           EOF
           chmod 600 ~/.netrc
 
+      - name: Setup heroku remote
+        run: heroku git:remote -a ${{secrets.HEROKU_APP_NAME}}
+
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.13.15
         with:
