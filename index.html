@@ -4,168 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Our Love Story</title>
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #ffe6f2;
-            font-family: 'Arial', sans-serif;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
-        }
-
-        .envelope {
-            position: relative;
-            width: 200px;
-            height: 140px;
-            background: #ff4444;
-            cursor: pointer;
-            transition: all 0.5s ease;
-        }
-
-        .envelope::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            clip-path: polygon(0 0, 100% 0, 50% 50%);
-            background: #ff6666;
-        }
-
-        .flap-open::before {
-            transform: rotateX(180deg);
-            transition: transform 0.5s ease;
-        }
-
-        .content {
-            display: none;
-            text-align: center;
-            max-width: 800px;
-            width: 90%;
-            position: relative;
-        }
-
-        .slider-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
-        }
-
-        .slider {
-            display: flex;
-            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .slide {
-            min-width: 100%;
-            flex-shrink: 0;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-        }
-
-        .slide.active {
-            opacity: 1;
-        }
-
-        .slide img {
-            width: 100%;
-            height: 60vh;
-            max-height: 500px;
-            object-fit: cover;
-        }
-
-        .caption {
-            font-size: 24px;
-            color: #ff4444;
-            margin-top: 20px;
-            font-family: 'Brush Script MT', cursive;
-            min-height: 40px;
-        }
-
-        .nav-button {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.8);
-            border: none;
-            padding: 15px;
-            cursor: pointer;
-            border-radius: 50%;
-            font-size: 24px;
-            color: #ff4444;
-            transition: all 0.3s ease;
-        }
-
-        .nav-button:hover {
-            background: white;
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .prev { left: 20px; }
-        .next { right: 20px; }
-
-        .caption-loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 68, 68, 0.3);
-            border-radius: 50%;
-            border-top-color: #ff4444;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .envelope {
-                width: 150px;
-                height: 100px;
-            }
-
-            .slide img {
-                height: 50vh;
-            }
-
-            .nav-button {
-                padding: 10px;
-                font-size: 18px;
-            }
-
-            .caption {
-                font-size: 18px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .envelope {
-                width: 130px;
-                height: 90px;
-            }
-
-            .slide img {
-                height: 45vh;
-            }
-
-            .caption {
-                font-size: 16px;
-            }
-        }
-
-        /* Add touch-action for Safari */
-        .slider-container {
-            touch-action: pan-y;
-        }
-    </style>
+    <link rel="stylesheet" href="public/css/styles.css">
 </head>
 <body>
     <div class="envelope"></div>
@@ -183,7 +22,6 @@
         <source src="public/audio/love-story.mp3" type="audio/mpeg">
     </audio>
 
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
     <script>
         // ========================
         // CONFIGURATION SECTION
@@ -215,13 +53,18 @@
         const slider = document.querySelector('.slider');
         const captionElement = document.querySelector('.caption');
         const music = document.getElementById('background-music');
+        var autoAdvanceInterval = null;
+        const pauseIcon = document.createElement('div');
+        pauseIcon.className = 'pause-icon playing'
         let currentSlide = 0;
+        var slidePaused = false;
 
         function createSlider() {
             IMAGE_PATHS.forEach((path, index) => {
                 const slide = document.createElement('div');
                 slide.className = 'slide';
                 slide.innerHTML = `<img src="${path}" alt="Memory ${index + 1}">`;
+                slider.parentElement.appendChild(pauseIcon);
                 slider.appendChild(slide);
             });
             document.querySelectorAll('.slide')[0].classList.add('active');
@@ -323,8 +166,27 @@
         document.querySelector('.next').addEventListener('click', () => changeSlide(1));
         document.querySelector('.prev').addEventListener('click', () => changeSlide(-1));
 
+        // Set event listener pause-icon
+        pauseIcon.addEventListener('click', () => {
+            if (music.paused) {
+                music.play();
+                startSliderAutoAdvance();
+            } else {
+                clearInterval(autoAdvanceInterval)
+                slidePaused = true;
+                music.pause();
+            }
+            pauseIcon.className = `pause-icon ${music.paused ? 'paused' : 'playing'}`;
+        });
+
         function startSliderAutoAdvance() {
-            setInterval(() => changeSlide(1), 5000);
+            if (autoAdvanceInterval) {
+                clearInterval(autoAdvanceInterval);
+            }
+
+            if (!slidePaused) {
+                autoAdvanceInterval = setInterval(() => changeSlide(1), 5000);
+            }
         }
     </script>
 </body>
